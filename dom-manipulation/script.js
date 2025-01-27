@@ -21,6 +21,7 @@ function addQuote() {
     showRandomQuote();   // Update the DOM
     saveQuotes();        // Persist data
     populateCategories(); // Update categories
+    postQuoteToServer({ text: newQuoteText, category: newQuoteCategory }); // Post new quote to server
   }
 }
 
@@ -91,13 +92,16 @@ function importFromJsonFile(event) {
 
 function exportToJsonFile() {
   const dataStr = JSON.stringify(quotes);
-  const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-  
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+
   const exportFileDefaultName = 'quotes.json';
   const linkElement = document.createElement('a');
-  linkElement.setAttribute('href', dataUri);
+  linkElement.setAttribute('href', url);
   linkElement.setAttribute('download', exportFileDefaultName);
   linkElement.click();
+
+  URL.revokeObjectURL(url); // Clean up
 }
 
 async function fetchQuotesFromServer() {
@@ -125,7 +129,7 @@ async function syncQuotes() {
     quotes.push(...mergedQuotes);
     saveQuotes();
     populateCategories();
-    alert('Quotes synced with server.');
+    alert('Quotes synced with server!');
   } catch (error) {
     console.error('Error syncing data with server:', error);
     alert('Failed to sync quotes with server.');
