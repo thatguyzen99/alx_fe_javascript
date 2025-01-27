@@ -100,17 +100,9 @@ function exportToJsonFile() {
   linkElement.click();
 }
 
-async function syncDataWithServer() {
-  try {
-    const response = await fetch('https://jsonplaceholder.typicode.com/posts');
-    const serverQuotes = await response.json();
-    const mergedQuotes = mergeQuotes(serverQuotes, quotes);
-    quotes.length = 0; // Clear current quotes
-    quotes.push(...mergedQuotes);
-    saveQuotes();
-  } catch (error) {
-    console.error('Error syncing data with server:', error);
-  }
+async function fetchQuotesFromServer() {
+  const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+  return response.json();
 }
 
 function mergeQuotes(serverQuotes, localQuotes) {
@@ -125,10 +117,40 @@ function mergeQuotes(serverQuotes, localQuotes) {
   return allQuotes;
 }
 
+async function syncQuotes() {
+  try {
+    const serverQuotes = await fetchQuotesFromServer();
+    const mergedQuotes = mergeQuotes(serverQuotes, quotes);
+    quotes.length = 0; // Clear current quotes
+    quotes.push(...mergedQuotes);
+    saveQuotes();
+    populateCategories();
+    alert('Quotes synced with server.');
+  } catch (error) {
+    console.error('Error syncing data with server:', error);
+    alert('Failed to sync quotes with server.');
+  }
+}
+
+function postQuoteToServer(newQuote) {
+  // Example function to post a new quote to the server
+  fetch('https://jsonplaceholder.typicode.com/posts', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(newQuote)
+  })
+  .then(response => response.json())
+  .then(data => console.log('Quote posted to server:', data))
+  .catch(error => console.error('Error posting quote to server:', error));
+}
+
 window.addEventListener("load", () => {
   loadQuotes();
   populateCategories();
   createAddQuoteForm(); // Call the function to create the add quote form
+  syncQuotes(); // Sync quotes with server on load
 });
 
-setInterval(syncDataWithServer, 60000); // Sync every 60 seconds
+setInterval(syncQuotes, 60000); // Sync every 60 seconds
